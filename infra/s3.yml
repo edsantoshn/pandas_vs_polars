@@ -1,0 +1,13 @@
+Resources:
+  S3Bucketdev: 
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: your_bucket_name
+      Tags:
+        - Key: "dev"
+          Value: "edsantoshn"
+        - Key: "project-name"
+          Value: "polars-vs-pandas"
+        - Key: "env"
+          Value: "dev"

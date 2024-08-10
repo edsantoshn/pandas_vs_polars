@@ -1,0 +1,22 @@
+service: polars-vs-pandas-infra
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.10
+  region: ${self:custom.config.${self:custom.stage}.my-region}
+
+custom:
+  stage: ${opt:stage, 'dev'}
+
+  config:
+    dev:
+      account_id: 'your-aws-account-id'
+      my-region: ${opt:region, 'us-east-2'}
+    prd:
+      account_id: 'your-aws-account-id'
+      my-region: ${opt:region, 'us-east-1'}
+
+resources:
+- ${file(s3.yml)}

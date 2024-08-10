@@ -1,0 +1,81 @@
+service: polars-vs-pandas-fns
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.10
+  region: ${self:custom.config.${self:custom.stage}.my-region}
+  versionFunctions: false
+
+
+package:
+  individually: true
+
+custom:
+  stage: ${opt:stage, 'dev'}
+
+  config:
+    dev:
+      account_id: 'your-aws-account-id'
+      my-region: ${opt:region, 'us-east-2'}
+      bucket_name: your_bucket_name
+    prd:
+      account_id: 'your-aws-account-id'
+      my-region: ${opt:region, 'us-east-1'}
+      bucket_name: your_bucket_name
+
+  pythonRequirements:
+    useDownloadCache: true
+    useStaticCache: true
+    dockerizePip: non-linux
+    cacheLocation: "../cache_python_requirements_plugin"
+    staticCacheMaxVersions: 5
+    fileName: requirements.txt
+
+functions:
+  ConvertCSVIntoParquetPandas:
+    handler: transform_csv_parquet.handler
+    description: Convert a csv into parquet file using pandas and pyarrow.
+    module: pandas
+    timeout: 600
+    memorySize: 2048
+    ephemeralStorageSize: 2048
+    events:
+      - s3:
+          bucket: ${self:custom.config.${self:custom.stage}.bucket_name}
+          event: s3:ObjectCreated:*
+          existing: true
+          rules:
+            - prefix: work/pandas/
+            - suffix: .csv
+          forceDeploy: true
+    role: arn:aws:iam::${self:custom.config.${self:custom.stage}.account_id}:role/PolarsVsPandasRole
+    tags:
+      dev: edsantoshn
+      project-name: polars-vs-pandas
+
+  ConvertCSVIntoParquetPolars:
+    handler: transform_csv_parquet.handler
+    description: Convert a csv into parquet file using polars.
+    module: polars
+    timeout: 600
+    memorySize: 2048
+    ephemeralStorageSize: 2048
+    events:
+      - s3:
+          bucket: ${self:custom.config.${self:custom.stage}.bucket_name}
+          event: s3:ObjectCreated:*
+          existing: true
+          rules:
+            - prefix: work/polars/
+            - suffix: .csv
+          forceDeploy: true
+    role: arn:aws:iam::${self:custom.config.${self:custom.stage}.account_id}:role/PolarsVsPandasRole
+    tags:
+      dev: edsantoshn
+      project-name: polars-vs-pandas
+
+
+plugins:
+  - serverless-python-requirements
